@@ -28,6 +28,7 @@ from turfpy.measurement import (
     rhumb_distance,
     square,
 )
+import json
 
 
 def test_bbox_point():
@@ -174,7 +175,9 @@ def test_envelope():
 
 
 def test_rhumb_destination():
-    start = Feature(geometry=Point((-75.343, 39.984)), properties={"marker-color": "F00"})
+    start = Feature(
+        geometry=Point((-75.343, 39.984)), properties={"marker-color": "F00"}
+    )
     distance = 50
     bearing = 90
     dest = rhumb_destination(
@@ -254,17 +257,16 @@ def test_destination():
 
 
 def test_boolean_point_in_polygon():
-    point = Feature(geometry=Point((-77, 44)))
-    polygon = Feature(
-        geometry=MultiPolygon(
-            [
-                ([(-81, 41), (-81, 47), (-72, 47), (-72, 41), (-81, 41)],),
-                ([(3.78, 9.28), (-130.91, 1.52), (35.12, 72.234), (3.78, 9.28)],),
-            ]
-        )
+    point = Point((-77, 44))
+    polygon = MultiPolygon(
+        [
+            ([(-81, 41), (-81, 47), (-72, 47), (-72, 41), (-81, 41)],),
+            ([(3.78, 9.28), (-130.91, 1.52), (35.12, 72.234), (3.78, 9.28)],),
+        ]
     )
+
     bpp = boolean_point_in_polygon(point, polygon)
-    assert bpp == True
+    assert bpp is True
 
 
 def test_point_to_line_distance():
@@ -346,19 +348,24 @@ def test_points_within_polygon():
     fc = FeatureCollection([fpoly, fpoly2])
     result = points_within_polygon(points, fc)
     assert result == {
+        "type": "FeatureCollection",
         "features": [
             {
-                "geometry": {"coordinates": [-46.6318, -23.5523], "type": "Point"},
-                "properties": {},
                 "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [-46.6318, -23.5523]},
+                "properties": {},
             },
             {
-                "geometry": {"coordinates": [-46.643, -23.557], "type": "Point"},
-                "properties": {},
                 "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [-46.663, -23.554]},
+                "properties": {},
+            },
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [-46.643, -23.557]},
+                "properties": {},
             },
         ],
-        "type": "FeatureCollection",
     }
 
     multi_polygon = Feature(

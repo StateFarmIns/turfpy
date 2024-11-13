@@ -23,13 +23,13 @@ from geojson import (
     Polygon,
 )
 
+
 from turfpy.helper import (
     avg_earth_radius_km,
     convert_length,
     feature_of,
     get_coord,
     get_coords,
-    get_geom,
     get_type,
     length_to_radians,
     radians_to_length,
@@ -142,7 +142,7 @@ def area(
         MultiPolygon,
         Feature,
         FeatureCollection,
-    ]
+    ],
 ):
     """
     This function calculates the area of the Geojson object given as input.
@@ -357,7 +357,9 @@ def length(geojson, units: str = "km"):
     def _callback_segment_reduce(previous_value, segment):
         coords = segment["geometry"]["coordinates"]
         return previous_value + distance(
-            Feature(geometry=Point(coords[0])), Feature(geometry=Point(coords[1])), units
+            Feature(geometry=Point(coords[0])),
+            Feature(geometry=Point(coords[1])),
+            units,
         )
 
     return segment_reduce(geojson, _callback_segment_reduce, 0)
@@ -403,7 +405,8 @@ def destination(
         radian = length_to_radians(distance)
 
     latitude2 = asin(
-        (sin(latitude1) * cos(radian)) + (cos(latitude1) * sin(radian) * cos(bearingRad))
+        (sin(latitude1) * cos(radian))
+        + (cos(latitude1) * sin(radian) * cos(bearingRad))
     )
     longitude2 = longitude1 + atan2(
         sin(bearingRad) * sin(radian) * cos(latitude1),
@@ -509,7 +512,6 @@ def along(line: Feature, dist, unit: str = "km") -> Feature:
                 )
                 return interpolated
         else:
-
             travelled += distance(
                 Feature(geometry=Point(coords[i])),
                 Feature(geometry=Point(coords[i + 1])),
@@ -679,7 +681,7 @@ def point_on_feature(geojson) -> Feature:
                     k += 1
                 j += 1
         elif geom["type"] == "Polygon" or geom["type"] == "MultiPolygon":
-            if boolean_point_in_polygon(cent, geom):
+            if boolean_point_in_polygon(cent, fc["features"][i]):
                 on_surface = True
         i += 1
 
@@ -714,7 +716,7 @@ def _point_on_segment(x, y, x1, y1, x2, y2):
 # ------------ boolean point in polygon ----------------#
 
 
-def boolean_point_in_polygon(point, polygon, ignore_boundary=False):
+def boolean_point_in_polygon(point: Point, polygon: Polygon, ignore_boundary=False):
     """
     Takes a Point or a Point Feature and Polygon or Polygon Feature as input and returns
     True if Point is in given Feature.
@@ -735,13 +737,14 @@ def boolean_point_in_polygon(point, polygon, ignore_boundary=False):
     >>> ([(3.78, 9.28), (-130.91, 1.52), (35.12, 72.234), (3.78, 9.28)],)]))
     >>> boolean_point_in_polygon(point, polygon)
     """
-    if not point:
+
+    if "type" not in point:
         raise Exception("point is required")
-    if not polygon:
+    if "type" not in polygon:
         raise Exception("polygon is required")
 
-    pt = get_coord(point)
-    geom = get_geom(polygon)
+    pt = point["coordinates"]
+    geom = polygon
     geo_type = geom["type"]
     bbox = polygon.get("bbox", None)
     polys = geom["coordinates"]
@@ -952,9 +955,9 @@ def _is_below(point1, point2, point3):
 
 
 def _is_left(point1, point2, point3):
-    return (point2[0] - point1[0]) * (point3[1] - point1[1]) - (point3[0] - point1[0]) * (
-        point2[1] - point1[1]
-    )
+    return (point2[0] - point1[0]) * (point3[1] - point1[1]) - (
+        point3[0] - point1[0]
+    ) * (point2[1] - point1[1])
 
 
 # -------------------------------#
@@ -962,7 +965,9 @@ def _is_left(point1, point2, point3):
 # ------------ point to line distance -----------#
 
 
-def point_to_line_distance(point: Feature, line: Feature, units="km", method="geodesic"):
+def point_to_line_distance(
+    point: Feature, line: Feature, units="km", method="geodesic"
+):
     """
     Returns the minimum distance between a Point and any segment of the LineString.
 
@@ -982,7 +987,9 @@ def point_to_line_distance(point: Feature, line: Feature, units="km", method="ge
     >>> point_to_line_distance(point, linestring)
     """
     if method != "geodesic" and method != "planar":
-        raise Exception("method name is incorrect ot should be either geodesic or planar")
+        raise Exception(
+            "method name is incorrect ot should be either geodesic or planar"
+        )
 
     options = {"units": units, "method": method}
 
@@ -1018,8 +1025,8 @@ def point_to_line_distance(point: Feature, line: Feature, units="km", method="ge
         segment_index,
     ):
         nonlocal options, distance
-        a = current_segment["geometry"]["coordinates"][0]
-        b = current_segment["geometry"]["coordinates"][1]
+        a = current_segment["coordinates"][0]
+        b = current_segment["coordinates"][1]
         d = distance_to_segment(p, a, b, options)
         if d < distance:
             distance = d
@@ -1035,10 +1042,14 @@ def distance_to_segment(p, a, b, options):
 
     c1 = _dot(w, v)
     if c1 <= 0:
-        return _calc_distance(p, a, {"method": options.get("method", ""), "units": "deg"})
+        return _calc_distance(
+            p, a, {"method": options.get("method", ""), "units": "deg"}
+        )
     c2 = _dot(v, v)
     if c2 <= c1:
-        return _calc_distance(p, b, {"method": options.get("method", ""), "units": "deg"})
+        return _calc_distance(
+            p, b, {"method": options.get("method", ""), "units": "deg"}
+        )
     b2 = c1 / c2
     Pb = [a[0] + (b2 * v[0]), a[1] + (b2 * v[1])]
 
@@ -1149,7 +1160,9 @@ def rhumb_destination(origin, distance, bearing, options: dict = {}) -> Feature:
     if was_negative_distance:
         distance_in_meters = -1 * (abs(distance_in_meters))
     coords = get_coord(origin)
-    destination_point = _calculate_rhumb_destination(coords, distance_in_meters, bearing)
+    destination_point = _calculate_rhumb_destination(
+        coords, distance_in_meters, bearing
+    )
     return Feature(
         geometry=Point(destination_point),
         properties=options.get("properties", ""),
@@ -1353,11 +1366,12 @@ def check_each_point(point, polygons, results):
         current_geometry, feature_index, feature_properties, feature_bbox, feature_id
     ):
         contained = False
-        if boolean_point_in_polygon(point, current_geometry):
-            contained = True
+        nonlocal results
+        if point not in results:
+            if boolean_point_in_polygon(point["geometry"], current_geometry):
+                contained = True
 
-        if contained:
-            nonlocal results
-            results.append(point)
+            if contained:
+                results.append(point)
 
     geom_each(polygons, __callback_geom_each)

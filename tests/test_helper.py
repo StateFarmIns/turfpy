@@ -42,6 +42,8 @@ def test_get_coord():
 
 def test_get_coords():
     """Test get_coords function"""
-    poly = Polygon([[(2.38, 57.322), (23.194, -20.28), (-120.43, 19.15), (2.38, 57.322)]])
+    poly = Polygon(
+        [[(2.38, 57.322), (23.194, -20.28), (-120.43, 19.15), (2.38, 57.322)]]
+    )
     coords = get_coords(poly)
     assert coords == poly.coordinates

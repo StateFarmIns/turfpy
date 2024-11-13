@@ -28,8 +28,8 @@ def test_random_position():
 
     pos = random_position(bbox=bbox(data))
     assert len(pos) == 2
-    pos = Feature(geometry=Point(pos))
-    assert boolean_point_in_polygon(point=pos, polygon=data)
+    pos = Point(pos)
+    assert boolean_point_in_polygon(point=pos, polygon=data["geometry"])
 
 
 def test_random_points():
@@ -53,4 +53,6 @@ def test_random_points():
     pos = random_points(count=3, bbox=bbox(data))
     assert len(pos["features"]) == 3
     for point in pos["features"]:
-        assert boolean_point_in_polygon(point=point, polygon=data)
+        assert boolean_point_in_polygon(
+            point=point["geometry"], polygon=data["geometry"]
+        )

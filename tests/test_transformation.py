@@ -287,12 +287,16 @@ def test_dissolve():
 
 def test_difference():
     f1 = Feature(
-        geometry=Polygon([[[128, -26], [141, -26], [141, -21], [128, -21], [128, -26]]]),
+        geometry=Polygon(
+            [[[128, -26], [141, -26], [141, -21], [128, -21], [128, -26]]]
+        ),
         properties={"combine": "yes", "fill": "#00f"},
     )
 
     f2 = Feature(
-        geometry=Polygon([[[126, -28], [140, -28], [140, -20], [126, -20], [126, -28]]]),
+        geometry=Polygon(
+            [[[126, -28], [140, -28], [140, -20], [126, -20], [126, -28]]]
+        ),
         properties={"combine": "yes"},
     )
 
@@ -325,7 +329,6 @@ def test_transform_rotate():
 
 
 def test_transform_translate():
-
     f = Feature(geometry=Polygon([[[0, 29], [3.5, 29], [2.5, 32], [0, 29]]]))
 
     translate_feature = transform_translate(f, 100, 35, mutate=True)
