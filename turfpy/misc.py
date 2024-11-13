@@ -86,7 +86,9 @@ def line_intersect(
         if not precise_matches.empty:
             for index, row in precise_matches.iterrows():
                 # intersect = intersects(mapping(row["geometry"]), segment)
-                intersection = Feature(geometry=mapping(row["geometry"].intersection(s)))
+                intersection = Feature(
+                    geometry=mapping(row["geometry"].intersection(s))
+                )
                 key = ",".join(map(str, get_coords(intersection)))
                 if key not in unique:
                     unique.add(key)
@@ -96,7 +98,7 @@ def line_intersect(
 
 
 def line_segment(
-    geojson: Union[LineString, Polygon, MultiLineString, MultiPolygon, Feature]
+    geojson: Union[LineString, Polygon, MultiLineString, MultiPolygon, Feature],
 ) -> FeatureCollection:
     """
     Creates a FeatureCollection of 2-vertex LineString segments from a
@@ -186,7 +188,8 @@ def create_segments(coords, properties):
 
     def callback(current_coords, previous_coords):
         segment = Feature(
-            geometry=LineString([previous_coords, current_coords]), properties=properties
+            geometry=LineString([previous_coords, current_coords]),
+            properties=properties,
         )
         segment.bbox = bbox(previous_coords, current_coords)
         segments.append(segment)
@@ -364,7 +367,9 @@ def line_slice(
     )
     clip_coords.append(get_coord(ends[1]))
 
-    return Feature(geometry=LineString(clip_coords), properties=line["properties"].copy())
+    return Feature(
+        geometry=LineString(clip_coords), properties=line["properties"].copy()
+    )
 
 
 def line_arc(
@@ -435,9 +440,9 @@ def line_arc(
 
     if alfa > arc_end_degree:
         coordinates.append(
-            destination(center, radius, arc_end_degree, {"steps": steps, "units": units})[
-                "geometry"
-            ]["coordinates"]
+            destination(
+                center, radius, arc_end_degree, {"steps": steps, "units": units}
+            )["geometry"]["coordinates"]
         )
 
     return Feature(geometry=LineString(coordinates, properties=properties))

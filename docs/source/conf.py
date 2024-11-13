@@ -23,9 +23,9 @@ sys.path.insert(0, target_dir)
 
 # -- Project information -----------------------------------------------------
 
-project = 'turfpy'
-copyright = '2020, Omkar Mestry, Sachin Kharude'
-author = 'Omkar Mestry, Sachin Kharude'
+project = "turfpy"
+copyright = "2020, Omkar Mestry, Sachin Kharude"
+author = "Omkar Mestry, Sachin Kharude"
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,15 +34,15 @@ author = 'Omkar Mestry, Sachin Kharude'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.coverage',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.doctest',
-    'jupyter_sphinx',
+    "sphinx.ext.coverage",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.doctest",
+    "jupyter_sphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 
 def setup(app):
@@ -52,7 +52,7 @@ def setup(app):
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -65,14 +65,14 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
-highlight_language = 'python'
-pygments_style = 'sphinx'
+html_static_path = ["_static"]
+highlight_language = "python"
+pygments_style = "sphinx"
 
 # Output file base name for HTML help builder.
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-htmlhelp_basename = 'turfpydoc'
+htmlhelp_basename = "turfpydoc"
 
 
 # -- Extension configuration -------------------------------------------------
@@ -83,10 +83,10 @@ autodoc_typehints = "description"
 # -- autodoc options configuration -------------------------------------------------
 
 autodoc_default_options = {
-    'members': True,
-    'undoc-members': True,
-    'special-members': True,
-    'show-inheritance': True,
-    'member-order': 'bysource',
-    'exclude-members': '__dict__,__weakref__,__module__'
+    "members": True,
+    "undoc-members": True,
+    "special-members": True,
+    "show-inheritance": True,
+    "member-order": "bysource",
+    "exclude-members": "__dict__,__weakref__,__module__",
 }

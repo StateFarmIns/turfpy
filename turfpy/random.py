@@ -53,7 +53,9 @@ def coord_in_bbox(bbox: list):
     ]
 
 
-def random_points(count: int = 1, bbox: Optional[list[Any]] = None) -> FeatureCollection:
+def random_points(
+    count: int = 1, bbox: Optional[list[Any]] = None
+) -> FeatureCollection:
     """
     Generates geojson random points, if bbox provided then the
     generated points will be in the bbox.

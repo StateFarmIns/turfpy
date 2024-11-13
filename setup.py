@@ -1,4 +1,5 @@
 """Project setup file."""
+
 import sys
 from codecs import open
 from os import path
@@ -17,12 +18,11 @@ install_requires = [x.strip() for x in all_reqs if "git+" not in x]
 
 packages = find_packages(exclude=["docs", "tests"])
 version = {}
-with open('{}/__version__.py'.format(packages[0])) as f:
+with open("{}/__version__.py".format(packages[0])) as f:
     exec(f.read(), version)
 
 download_url = (
-    "https://github.com/omanges/turfpy"
-    "/archive/" + version['__version__'] + ".zip"
+    "https://github.com/omanges/turfpy" "/archive/" + version["__version__"] + ".zip"
 )
 
 # The directory containing this file
@@ -34,7 +34,7 @@ with open(path.join(HERE, "README.md")) as fid:
 
 setup(
     name="turfpy",
-    version=version['__version__'],
+    version=version["__version__"],
     description="A Python library for performing geospatial data analysis which reimplements turf.js.",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -54,7 +54,7 @@ setup(
     ],
     project_urls={
         "Documentation": "https://turfpy.readthedocs.io",
-        "Source": "https://github.com/omanges/turfpy"
+        "Source": "https://github.com/omanges/turfpy",
     },
     packages=packages,
     keywords="Python Library for Turf",
@@ -64,5 +64,5 @@ setup(
     author_email="om.m.mestry@gmail.com, sachinkharude10@gmail.com",
     setup_requires=[] + pytest_runner,
     tests_require=["pytest"],
-    py_modules=["turfpy"]
+    py_modules=["turfpy"],
 )
