@@ -64,7 +64,7 @@ def points_within_polygon(
     return FeatureCollection(list(results))
 
 
-def check_each_point(point: Point, polygons: list[Polygon], results: list):
+def check_each_point(point: Point, polygons: list[Polygon], results: ListProxy):
     """
     Check each point with in the polygon(s) and append the point to the results list
 
