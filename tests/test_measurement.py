@@ -1,3 +1,5 @@
+import json
+
 from geojson import (
     Feature,
     FeatureCollection,
@@ -14,7 +16,6 @@ from turfpy.measurement import (
     along,
     bbox,
     bbox_polygon,
-    boolean_point_in_polygon,
     center,
     destination,
     envelope,
@@ -22,13 +23,11 @@ from turfpy.measurement import (
     midpoint,
     nearest_point,
     point_to_line_distance,
-    points_within_polygon,
     rhumb_bearing,
     rhumb_destination,
     rhumb_distance,
     square,
 )
-import json
 
 
 def test_bbox_point():
@@ -175,9 +174,7 @@ def test_envelope():
 
 
 def test_rhumb_destination():
-    start = Feature(
-        geometry=Point((-75.343, 39.984)), properties={"marker-color": "F00"}
-    )
+    start = Feature(geometry=Point((-75.343, 39.984)), properties={"marker-color": "F00"})
     distance = 50
     bearing = 90
     dest = rhumb_destination(
@@ -256,19 +253,6 @@ def test_destination():
     assert c1 == 39.9802
 
 
-def test_boolean_point_in_polygon():
-    point = Point((-77, 44))
-    polygon = MultiPolygon(
-        [
-            ([(-81, 41), (-81, 47), (-72, 47), (-72, 41), (-81, 41)],),
-            ([(3.78, 9.28), (-130.91, 1.52), (35.12, 72.234), (3.78, 9.28)],),
-        ]
-    )
-
-    bpp = boolean_point_in_polygon(point, polygon)
-    assert bpp is True
-
-
 def test_point_to_line_distance():
     point = Feature(geometry=Point((0, 0)))
     linestring = Feature(geometry=LineString([(1, 1), (-1, 1)]))
@@ -306,84 +290,3 @@ def test_rhumb_bearing():
 #     c0, c1 = cen["geometry"]["coordinates"]
 #     # assert c0 == 82
 #     assert c1 == 36
-
-
-def test_points_within_polygon():
-    f1 = Feature(geometry=Point((-46.6318, -23.5523)))
-    f2 = Feature(geometry=Point((-46.6246, -23.5325)))
-    f3 = Feature(geometry=Point((-46.6062, -23.5513)))
-    f4 = Feature(geometry=Point((-46.663, -23.554)))
-    f5 = Feature(geometry=Point((-46.643, -23.557)))
-    f6 = Feature(geometry=Point((-73, 45)))
-    f7 = Feature(geometry=Point((36, 71)))
-    points = FeatureCollection([f1, f2, f3, f4, f5, f6, f7])
-    poly = Polygon(
-        [
-            [
-                (-46.653, -23.543),
-                (-46.634, -23.5346),
-                (-46.613, -23.543),
-                (-46.614, -23.559),
-                (-46.631, -23.567),
-                (-46.653, -23.560),
-                (-46.653, -23.543),
-            ]
-        ]
-    )
-    fpoly = Feature(geometry=poly)
-    poly2 = Polygon(
-        [
-            [
-                (-76.653, -11.543),
-                (-46.634, -23.5346),
-                (-46.613, -23.543),
-                (-46.614, -23.559),
-                (-46.631, -23.567),
-                (-46.653, -23.560),
-                (-76.653, -11.543),
-            ]
-        ]
-    )
-    fpoly2 = Feature(geometry=poly2)
-    fc = FeatureCollection([fpoly, fpoly2])
-    result = points_within_polygon(points, fc)
-    assert result == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "geometry": {"type": "Point", "coordinates": [-46.6318, -23.5523]},
-                "properties": {},
-            },
-            {
-                "type": "Feature",
-                "geometry": {"type": "Point", "coordinates": [-46.663, -23.554]},
-                "properties": {},
-            },
-            {
-                "type": "Feature",
-                "geometry": {"type": "Point", "coordinates": [-46.643, -23.557]},
-                "properties": {},
-            },
-        ],
-    }
-
-    multi_polygon = Feature(
-        geometry=MultiPolygon(
-            [
-                ([(-81, 41), (-81, 47), (-72, 47), (-72, 41), (-81, 41)],),
-                ([(3.78, 9.28), (-130.91, 1.52), (35.12, 72.234), (3.78, 9.28)],),
-            ]
-        )
-    )
-    result2 = points_within_polygon(f6, multi_polygon)
-    assert result2 == {
-        "features": [
-            {
-                "geometry": {"coordinates": [-73, 45], "type": "Point"},
-                "properties": {},
-                "type": "Feature",
-            }
-        ],
-        "type": "FeatureCollection",
-    }

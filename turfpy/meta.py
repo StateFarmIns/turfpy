@@ -1,8 +1,4 @@
-from geojson import (
-    Feature,
-    Point,
-    LineString,
-)
+from geojson import Feature, LineString, Point
 
 
 def coord_each(geojson_obj, callback, exclude_wrap_coord=False):
@@ -19,9 +15,7 @@ def coord_each(geojson_obj, callback, exclude_wrap_coord=False):
         geometry_maybe_collection = (
             geojson_obj["features"][feature_index]["geometry"]
             if is_feature_collection
-            else geojson_obj["geometry"]
-            if is_feature
-            else geojson_obj
+            else geojson_obj["geometry"] if is_feature else geojson_obj
         )
         is_geometry_collection = (
             geometry_maybe_collection["type"] == "GeometryCollection"
@@ -29,9 +23,7 @@ def coord_each(geojson_obj, callback, exclude_wrap_coord=False):
             else False
         )
         stop_g = (
-            len(geometry_maybe_collection["geometries"])
-            if is_geometry_collection
-            else 1
+            len(geometry_maybe_collection["geometries"]) if is_geometry_collection else 1
         )
 
         for geom_index in range(stop_g):
@@ -233,30 +225,22 @@ def geom_each(geojson_obj, callback):
         geometry_maybe_collection = (
             geojson_obj["features"][i]["geometry"]
             if is_feature_collection
-            else geojson_obj["geometry"]
-            if is_feature
-            else geojson_obj
+            else geojson_obj["geometry"] if is_feature else geojson_obj
         )
         feature_properties = (
             geojson_obj["features"][i]["properties"]
             if is_feature_collection
-            else geojson_obj["properties"]
-            if is_feature
-            else {}
+            else geojson_obj["properties"] if is_feature else {}
         )
         feature_bbox = (
             geojson_obj["features"][i].get("bbox")
             if is_feature_collection
-            else geojson_obj.get("bbox")
-            if is_feature
-            else None
+            else geojson_obj.get("bbox") if is_feature else None
         )
         feature_id = (
             geojson_obj["features"][i].get("id")
             if is_feature_collection
-            else geojson_obj.get("id")
-            if is_feature
-            else None
+            else geojson_obj.get("id") if is_feature else None
         )
         is_geometry_collection = (
             geometry_maybe_collection["type"] == "GeometryCollection"
@@ -264,9 +248,7 @@ def geom_each(geojson_obj, callback):
             else False
         )
         stop_g = (
-            len(geometry_maybe_collection["geometries"])
-            if is_geometry_collection
-            else 1
+            len(geometry_maybe_collection["geometries"]) if is_geometry_collection else 1
         )
 
         for g in range(stop_g):
@@ -358,9 +340,7 @@ def flatten_each(geojson_obj, callback):
         if geom_type in [None, "Point", "LineString", "Polygon"]:
             if (
                 callback(
-                    Feature(
-                        geometry=geometry, properties=properties, bbox=bbox, id=id_
-                    ),
+                    Feature(geometry=geometry, properties=properties, bbox=bbox, id=id_),
                     feature_index,
                     0,
                 )
@@ -428,12 +408,11 @@ def segment_each(geojson_obj, callback):
             multi_part_index_coord,
             geometry_index,
         ):
-            nonlocal \
-                previous_coords, \
-                previous_feature_index, \
-                previous_multi_index, \
-                prev_geom_index, \
-                segment_index
+            nonlocal previous_coords
+            nonlocal previous_feature_index
+            nonlocal previous_multi_index
+            nonlocal prev_geom_index
+            nonlocal segment_index
             if (
                 previous_coords is None
                 or feature_index > previous_feature_index

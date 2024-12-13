@@ -56,9 +56,11 @@ class Spline:
                     },  # noqa: E501
                     {
                         "x": (1.0 - self.sharpness) * self.points[i + 1]["x"]
-                        + self.sharpness * (self.centers[i + 1]["x"] + dx),  # noqa: E501  # noqa: E126
+                        + self.sharpness
+                        * (self.centers[i + 1]["x"] + dx),  # noqa: E501  # noqa: E126
                         "y": (1.0 - self.sharpness) * self.points[i + 1]["y"]
-                        + self.sharpness * (self.centers[i + 1]["y"] + dy),  # noqa: E501  # noqa: E126
+                        + self.sharpness
+                        * (self.centers[i + 1]["y"] + dy),  # noqa: E501  # noqa: E126
                         "z": (1.0 - self.sharpness) * self.points[i + 1]["z"]
                         + self.sharpness * (self.centers[i + 1]["z"] + dz),  # noqa: E501
                     },

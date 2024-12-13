@@ -395,9 +395,7 @@ def __find_hole_bridge(hole, outer_node):
         ):
             tan = abs(hy - p.y) / (hx - p.x)  # tangential
 
-            if (tan < tanMin or (tan == tanMin and p.x > m.x)) and locallyInside(
-                p, hole
-            ):
+            if (tan < tanMin or (tan == tanMin and p.x > m.x)) and locallyInside(p, hole):
                 m = p
                 tanMin = tan
 

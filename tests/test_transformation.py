@@ -287,16 +287,12 @@ def test_dissolve():
 
 def test_difference():
     f1 = Feature(
-        geometry=Polygon(
-            [[[128, -26], [141, -26], [141, -21], [128, -21], [128, -26]]]
-        ),
+        geometry=Polygon([[[128, -26], [141, -26], [141, -21], [128, -21], [128, -26]]]),
         properties={"combine": "yes", "fill": "#00f"},
     )
 
     f2 = Feature(
-        geometry=Polygon(
-            [[[126, -28], [140, -28], [140, -20], [126, -20], [126, -28]]]
-        ),
+        geometry=Polygon([[[126, -28], [140, -28], [140, -20], [126, -20], [126, -28]]]),
         properties={"combine": "yes"},
     )
 

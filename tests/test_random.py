@@ -4,7 +4,8 @@ Test module for randoms.
 
 from geojson import Feature, Point
 
-from turfpy.measurement import bbox, boolean_point_in_polygon
+from turfpy.boolean import boolean_point_in_polygon
+from turfpy.measurement import bbox
 from turfpy.random import random_points, random_position
 
 
@@ -28,8 +29,8 @@ def test_random_position():
 
     pos = random_position(bbox=bbox(data))
     assert len(pos) == 2
-    pos = Point(pos)
-    assert boolean_point_in_polygon(point=pos, polygon=data["geometry"])
+    pos = Feature(geometry=Point(pos))
+    assert boolean_point_in_polygon(point=pos, polygon=data)
 
 
 def test_random_points():
@@ -53,6 +54,4 @@ def test_random_points():
     pos = random_points(count=3, bbox=bbox(data))
     assert len(pos["features"]) == 3
     for point in pos["features"]:
-        assert boolean_point_in_polygon(
-            point=point["geometry"], polygon=data["geometry"]
-        )
+        assert boolean_point_in_polygon(point=point, polygon=data)

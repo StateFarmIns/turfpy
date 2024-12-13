@@ -529,9 +529,7 @@ def dissolve(
     else:
         return union(features)
     if "properties" in features.keys():
-        return FeatureCollection(
-            dissolve_feature_list, properties=features["properties"]
-        )
+        return FeatureCollection(dissolve_feature_list, properties=features["properties"])
     else:
         return FeatureCollection(dissolve_feature_list)
 
@@ -633,9 +631,7 @@ def transform_rotate(
         initial_angle = rhumb_bearing(GeoPoint(pivot), GeoPoint(coord))
         final_angle = initial_angle + angle
         distance = rhumb_distance(GeoPoint(pivot), GeoPoint(coord))
-        new_coords = get_coord(
-            rhumb_destination(GeoPoint(pivot), distance, final_angle)
-        )
+        new_coords = get_coord(rhumb_destination(GeoPoint(pivot), distance, final_angle))
         coord[0] = new_coords[0]
         coord[1] = new_coords[1]
 
@@ -774,9 +770,7 @@ def scale(feature, factor, origin):
         original_distance = rhumb_distance(GeoPoint(origin), GeoPoint(coord))
         bearing = rhumb_bearing(GeoPoint(origin), GeoPoint(coord))
         new_distance = original_distance * factor
-        new_coord = get_coord(
-            rhumb_destination(GeoPoint(origin), new_distance, bearing)
-        )
+        new_coord = get_coord(rhumb_destination(GeoPoint(origin), new_distance, bearing))
         coord[0] = new_coord[0]
         coord[1] = new_coord[1]
         if len(coord) == 3:
@@ -955,9 +949,7 @@ def line_offset_feature(line, distance, units):
 
     for index, current_coords in enumerate(coords):
         if index != len(coords) - 1:
-            segment = _process_segment(
-                current_coords, coords[index + 1], offset_degrees
-            )
+            segment = _process_segment(current_coords, coords[index + 1], offset_degrees)
             segments.append(segment)
             if index > 0:
                 seg2_coords = segments[index - 1]
@@ -1088,9 +1080,7 @@ def voronoi(
     ]
 
     convex_hull = MultiPoint([Point(i) for i in points]).convex_hull.buffer(2)
-    result = MultiPolygon(
-        [poly.intersection(convex_hull) for poly in polygonize(lines)]
-    )
+    result = MultiPolygon([poly.intersection(convex_hull) for poly in polygonize(lines)])
     result = MultiPolygon(
         [p for p in result.geoms]
         + [p for p in convex_hull.difference(unary_union(result)).geoms]

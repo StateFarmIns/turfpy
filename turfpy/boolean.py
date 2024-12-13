@@ -17,7 +17,6 @@ from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry import shape
 
 from turfpy.feature_conversion import polygon_to_line
-from turfpy.measurement import boolean_point_in_polygon
 from turfpy.meta import flatten_each
 from turfpy.misc import line_intersect
 
@@ -75,7 +74,9 @@ def __is_line_in_poly(polygon: Polygon, line_string: LineString) -> bool:
     :rtype: bool
     """
     for coord in line_string["coordinates"]:
-        if boolean_point_in_polygon(Point(coordinates=coord), polygon):
+        if boolean_point_in_polygon(
+            Feature(geometry=Point(coordinates=coord)), Feature(geometry=polygon)
+        ):
             return True
 
     do_lines_intersect = line_intersect(line_string, polygon_to_line(polygon))
@@ -98,11 +99,15 @@ def __is_poly_in_poly(feature1: Polygon, feature2: Polygon) -> bool:
     :rtype: bool
     """
     for coord1 in feature1["coordinates"][0]:
-        if boolean_point_in_polygon(Point(coordinates=coord1), feature2):
+        if boolean_point_in_polygon(
+            Feature(geometry=Point(coordinates=coord1)), Feature(geometry=feature2)
+        ):
             return True
 
     for coord2 in feature2["coordinates"][0]:
-        if boolean_point_in_polygon(Point(coordinates=coord2), feature1):
+        if boolean_point_in_polygon(
+            Feature(geometry=Point(coordinates=coord2)), Feature(geometry=feature1)
+        ):
             return True
 
     do_lines_intersect = line_intersect(
@@ -156,9 +161,7 @@ def __disjoint(feature_1: Feature, feature_2: Feature) -> bool:
         elif geom2_type == "LineString":
             return not __is_point_on_line(feature_2["geometry"], feature_1["geometry"])
         elif geom2_type == "Polygon":
-            return not boolean_point_in_polygon(
-                feature_1["geometry"], feature_2["geometry"]
-            )
+            return not boolean_point_in_polygon(feature_1, feature_2)
 
     elif geom1_type == "LineString":
         if geom2_type == "Point":
@@ -170,9 +173,7 @@ def __disjoint(feature_1: Feature, feature_2: Feature) -> bool:
 
     elif geom1_type == "Polygon":
         if geom2_type == "Point":
-            return not boolean_point_in_polygon(
-                feature_2["geometry"], feature_1["geometry"]
-            )
+            return not boolean_point_in_polygon(feature_2, feature_1)
         elif geom2_type == "LineString":
             return not __is_line_in_poly(feature_1["geometry"], feature_2["geometry"])
         elif geom2_type == "Polygon":
@@ -245,9 +246,7 @@ def boolean_intersects(feature_1: Feature, feature_2: Feature) -> bool:
             nonlocal bool_result
             if bool_result:
                 return True
-            bool_result = not boolean_disjoint(
-                flatten1["geometry"], flatten2["geometry"]
-            )
+            bool_result = not boolean_disjoint(flatten1["geometry"], flatten2["geometry"])
 
         flatten_each(feature_2, inner_check)
 
@@ -256,15 +255,33 @@ def boolean_intersects(feature_1: Feature, feature_2: Feature) -> bool:
     return bool_result
 
 
-def __is_point_in_multipoint(
-    point: ShapelyPoint, multipoint: ShapelyMultiPoint
-) -> bool:
+def __is_point_in_multipoint(point: ShapelyPoint, multipoint: ShapelyMultiPoint) -> bool:
+    """
+    Determine if a point is in a multipoint.
+
+    :param point: Shapely Point
+    :type point: Point
+    :param multipoint: Shapely MultiPoint
+    :type multipoint: MultiPoint
+    :returns: True if the point is in the multipoint
+    :rtype: bool
+    """
     return any(point.equals(ShapelyPoint(coord)) for coord in multipoint.geoms)
 
 
 def __is_multipoint_in_multipoint(
     multipoint1: ShapelyMultiPoint, multipoint2: ShapelyMultiPoint
 ) -> bool:
+    """
+    Determine if a multipoint is in another multipoint
+
+    :param multipoint1: Shapely MultiPoint
+    :type multipoint1: MultiPoint
+    :param multipoint2: Shapely MultiPoint
+    :type multipoint2: MultiPoint
+    :returns: True if the multipoint is in the other multipoint
+    :rtype: bool
+    """
     return all(
         any(
             ShapelyPoint(coord1).equals(ShapelyPoint(coord2))
@@ -277,6 +294,16 @@ def __is_multipoint_in_multipoint(
 def __is_multipoint_on_line(
     multipoint: ShapelyMultiPoint, line: ShapelyLineString
 ) -> bool:
+    """
+    Determine if a multipoint is on a line
+
+    :param multipoint: Shapely MultiPoint
+    :type multipoint: MultiPoint
+    :param line: Shapely LineString
+    :type line: LineString
+    :returns: True if the multipoint is on the line
+    :rtype: bool
+    """
     found_inside_point = False
 
     for point in multipoint.geoms:
@@ -290,9 +317,17 @@ def __is_multipoint_on_line(
     return found_inside_point
 
 
-def __is_multipoint_in_poly(
-    multipoint: ShapelyMultiPoint, poly: ShapelyPolygon
-) -> bool:
+def __is_multipoint_in_poly(multipoint: ShapelyMultiPoint, poly: ShapelyPolygon) -> bool:
+    """
+    Determine if a multipoint is in a polygon
+
+    :param multipoint: Shapely MultiPoint
+    :type multipoint: MultiPoint
+    :param poly: Shapely Polygon
+    :type poly: Polygon
+    :returns: True if the multipoint is in the polygon
+    :rtype: bool
+    """
     output = True
     one_inside = False
     is_inside = False
@@ -300,15 +335,17 @@ def __is_multipoint_in_poly(
     for coord in multipoint.geoms:
         polygon_type = poly.geom_type
         if polygon_type == "Polygon":
-            geojson_poly = Polygon(
-                coordinates=json.loads(to_geojson(poly))["coordinates"]
+            geojson_poly = Feature(
+                geometry=Polygon(coordinates=json.loads(to_geojson(poly))["coordinates"])
             )
         elif polygon_type == "MultiPolygon":
-            geojson_poly = MultiPolygon(
-                coordinates=json.loads(to_geojson(poly))["coordinates"]
+            geojson_poly = Feature(
+                geometry=MultiPolygon(
+                    coordinates=json.loads(to_geojson(poly))["coordinates"]
+                )
             )
         is_inside = boolean_point_in_polygon(
-            json.loads(to_geojson(coord)), geojson_poly
+            Feature(geometry=json.loads(to_geojson(coord))), geojson_poly
         )
 
         if not is_inside:
@@ -316,7 +353,7 @@ def __is_multipoint_in_poly(
             break
         if not one_inside:
             is_inside = boolean_point_in_polygon(
-                json.loads(to_geojson(coord)),
+                Feature(geometry=json.loads(to_geojson(coord))),
                 geojson_poly,
                 ignore_boundary=True,
             )
@@ -329,6 +366,22 @@ def boolean_point_on_line(
     ignore_end_vertices: bool = False,
     epsilon: Optional[float] = None,
 ) -> bool:
+    """
+    Determine if a point is on a line
+
+    :param pt: GeoJSON Point
+    :type pt: Point
+    :param line: GeoJSON LineString
+    :type line: LineString
+    :param ignore_end_vertices: Whether to ignore the end vertices
+    :type ignore_end_vertices: bool
+    :param epsilon: Epsilon value for floating point comparison
+    :type epsilon: Optional[float]
+    :returns: True if the point is on the line
+    :rtype: bool
+    """
+    pt = shape(pt)
+    line
     pt_coords = pt.coords[0]
     line_coords = list(line.coords)
 
@@ -367,6 +420,24 @@ def __is_point_on_line_segment(
     exclude_boundary_type: Optional[str],
     epsilon: Optional[float],
 ) -> bool:
+    """
+    Determine if a point is on a line segment
+
+    :param line_segment_start: Start of the line segment
+    :type line_segment_start: Tuple[float, float]
+    :param line_segment_end: End of the line segment
+    :type line_segment_end: Tuple[float, float]
+    :param pt: Point to check
+    :type pt: Tuple[float, float]
+    :param exclude_boundary: Whether to exclude the boundary
+    :type exclude_boundary: Optional[bool]
+    :param exclude_boundary_type: Type of boundary to exclude
+    :type exclude_boundary_type: Optional[str]
+    :param epsilon: Epsilon value for floating point comparison
+    :type epsilon: Optional[float]
+    :returns: True if the point is on the line segment
+    :rtype: bool
+    """
     x, y = pt
     x1, y1 = line_segment_start
     x2, y2 = line_segment_end
@@ -400,6 +471,111 @@ def __is_point_on_line_segment(
         return dyl > 0 if y1 < y < y2 else y2 < y < y1
 
     return False
+
+
+def __in_ring(pt: list, ring: list, ignore_boundary: bool) -> bool:
+    """
+    Determine if a point is in a ring.
+
+    :param pt: Point to check
+    :type pt: list
+    :param ring: Ring
+    :type ring: list
+    :param ignore_boundary: Whether to ignore the boundary
+    :type ignore_boundary: bool
+    :returns: True if the point is in the ring
+    :rtype: bool
+    """
+    is_inside = False
+    if ring[0][0] == ring[len(ring) - 1][0] and ring[0][1] == ring[len(ring) - 1][1]:
+        ring = ring[0 : len(ring) - 1]
+    j = len(ring) - 1
+    for i in range(0, len(ring)):
+        xi = ring[i][0]
+        yi = ring[i][1]
+        xj = ring[j][0]
+        yj = ring[j][1]
+        on_boundary = (
+            (pt[1] * (xi - xj) + yi * (xj - pt[0]) + yj * (pt[0] - xi) == 0)
+            and ((xi - pt[0]) * (xj - pt[0]) <= 0)
+            and ((yi - pt[1]) * (yj - pt[1]) <= 0)
+        )
+        if on_boundary:
+            return not ignore_boundary
+        intersect = ((yi > pt[1]) != (yj > pt[1])) and (
+            pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi
+        )
+        if intersect:
+            is_inside = not is_inside
+        j = i
+    return is_inside
+
+
+def __in_bbox(pt: list, bbox: list) -> bool:
+    """
+    Determine if a point is in a bounding box.
+
+    :param pt: Point to check
+    :type pt: list
+    :param bbox: Bounding box
+    :type bbox: list
+    :returns: True if the point is in the bounding box
+    :rtype: bool
+    """
+    return bbox[0] <= pt[0] <= bbox[2] and bbox[1] <= pt[1] <= bbox[3]
+
+
+def boolean_point_in_polygon(point: Feature, polygon: Feature, ignore_boundary=False):
+    """
+    Boolean Point In Polygon takes a Point and a Polygon or MultiPolygon
+    and determines if the point resides inside the polygon.
+    The polygon can be convex or concave. The function accounts for holes.
+
+    :param point: GeoJSON Point
+    :type point: Point
+    :param polygon: GeoJSON Polygon or MultiPolygon
+    :type polygon: Polygon
+    :param ignore_boundary: Whether to ignore the boundary
+    :type ignore_boundary: bool
+    :returns: True if the point resides inside the polygon
+    :rtype: bool
+    """
+    # Check if point feature is a point
+    if point["type"] != "Feature" and point["geometry"]["type"] != "Point":
+        raise Exception("point is required")
+    # Check if polygon feature is a polygon
+    if polygon["type"] != "Feature" and (
+        polygon["geometry"]["type"] != "Polygon"
+        and polygon["geometry"]["type"] != "MultiPolygon"
+    ):
+        raise Exception("polygon is required")
+
+    pt = point["geometry"]["coordinates"]
+    geom = polygon
+    geo_type = geom["geometry"]["type"]
+    bbox = polygon.get("bbox", None)
+    polys = geom["geometry"]["coordinates"]
+
+    if bbox and not __in_bbox(pt, bbox):
+        return False
+
+    if geo_type == "Polygon":
+        polys = [polys]
+
+    inside_poly = False
+
+    for i in range(0, len(polys)):
+        if __in_ring(pt, polys[i][0], ignore_boundary):
+            in_hole = False
+            k = 1
+            while k < len(polys[i]) and not in_hole:
+                if __in_ring(pt, polys[i][k], not ignore_boundary):
+                    in_hole = True
+                k += 1
+            if not in_hole:
+                inside_poly = True
+
+    return inside_poly
 
 
 def boolean_within(feature_1: Feature, feature_2: Feature) -> bool:

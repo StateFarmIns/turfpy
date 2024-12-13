@@ -5,11 +5,7 @@ This is mainly inspired by turf.js.
 link: http://turfjs.org/
 """
 
-import concurrent.futures
-from functools import partial
 from math import asin, atan2, cos, degrees, log, pi, pow, radians, sin, sqrt, tan
-from multiprocessing import Manager
-from multiprocessing.managers import ListProxy
 from typing import Optional, Union
 
 from geojson import (
@@ -22,7 +18,6 @@ from geojson import (
     Point,
     Polygon,
 )
-
 
 from turfpy.helper import (
     avg_earth_radius_km,
@@ -37,7 +32,6 @@ from turfpy.helper import (
 from turfpy.meta import (
     coord_each,
     feature_each,
-    geom_each,
     geom_reduce,
     segment_each,
     segment_reduce,
@@ -354,8 +348,15 @@ def length(geojson, units: str = "km"):
     >>> length(ls)
     """
 
-    def _callback_segment_reduce(previous_value, segment):
-        coords = segment["geometry"]["coordinates"]
+    def _callback_segment_reduce(
+        previous_value,
+        segment,
+        feature_index,
+        multi_feature_index,
+        geometry_index,
+        segment_index,
+    ):
+        coords = segment["coordinates"]
         return previous_value + distance(
             Feature(geometry=Point(coords[0])),
             Feature(geometry=Point(coords[1])),
@@ -405,8 +406,7 @@ def destination(
         radian = length_to_radians(distance)
 
     latitude2 = asin(
-        (sin(latitude1) * cos(radian))
-        + (cos(latitude1) * sin(radian) * cos(bearingRad))
+        (sin(latitude1) * cos(radian)) + (cos(latitude1) * sin(radian) * cos(bearingRad))
     )
     longitude2 = longitude1 + atan2(
         sin(bearingRad) * sin(radian) * cos(latitude1),
@@ -623,6 +623,8 @@ def point_on_feature(geojson) -> Feature:
     >>> feature = Feature(geometry=point)
     >>> point_on_feature(feature)
     """
+    from turfpy.boolean import boolean_point_in_polygon
+
     fc = _normalize(geojson)
 
     cent = centroid(fc)
@@ -709,96 +711,6 @@ def _point_on_segment(x, y, x1, y1, x2, y2):
     ap = sqrt((x - x1) * (x - x1) + (y - y1) * (y - y1))
     pb = sqrt((x2 - x) * (x2 - x) + (y2 - y) * (y2 - y))
     return ab == (ap + pb)
-
-
-# -------------------------------#
-
-# ------------ boolean point in polygon ----------------#
-
-
-def boolean_point_in_polygon(point: Point, polygon: Polygon, ignore_boundary=False):
-    """
-    Takes a Point or a Point Feature and Polygon or Polygon Feature as input and returns
-    True if Point is in given Feature.
-
-    :param point: Point or Point Feature.
-    :param polygon: Polygon or Polygon Feature.
-    :param ignore_boundary: [Optional] default value is False, specify whether to exclude
-        boundary of the given polygon or not.
-    :return: True if the given Point is in Polygons else False
-
-    Example:
-
-    >>> from turfpy.measurement import boolean_point_in_polygon
-    >>> from geojson import Point, MultiPolygon, Feature
-    >>> point = Feature(geometry=Point((-77, 44)))
-    >>> polygon = Feature(geometry=MultiPolygon([([(-81, 41), (-81, 47), (-72, 47),
-    (-72, 41), (-81, 41)],),
-    >>> ([(3.78, 9.28), (-130.91, 1.52), (35.12, 72.234), (3.78, 9.28)],)]))
-    >>> boolean_point_in_polygon(point, polygon)
-    """
-
-    if "type" not in point:
-        raise Exception("point is required")
-    if "type" not in polygon:
-        raise Exception("polygon is required")
-
-    pt = point["coordinates"]
-    geom = polygon
-    geo_type = geom["type"]
-    bbox = polygon.get("bbox", None)
-    polys = geom["coordinates"]
-
-    if bbox and not in_bbox(pt, bbox):
-        return False
-
-    if geo_type == "Polygon":
-        polys = [polys]
-
-    inside_poly = False
-
-    for i in range(0, len(polys)):
-        if in_ring(pt, polys[i][0], ignore_boundary):
-            in_hole = False
-            k = 1
-            while k < len(polys[i]) and not in_hole:
-                if in_ring(pt, polys[i][k], not ignore_boundary):
-                    in_hole = True
-                k += 1
-            if not in_hole:
-                inside_poly = True
-
-    return inside_poly
-
-
-def in_ring(pt, ring, ignore_boundary):
-    is_inside = False
-    if ring[0][0] == ring[len(ring) - 1][0] and ring[0][1] == ring[len(ring) - 1][1]:
-        ring = ring[0 : len(ring) - 1]
-    j = len(ring) - 1
-    for i in range(0, len(ring)):
-        xi = ring[i][0]
-        yi = ring[i][1]
-        xj = ring[j][0]
-        yj = ring[j][1]
-        on_boundary = (
-            (pt[1] * (xi - xj) + yi * (xj - pt[0]) + yj * (pt[0] - xi) == 0)
-            and ((xi - pt[0]) * (xj - pt[0]) <= 0)
-            and ((yi - pt[1]) * (yj - pt[1]) <= 0)
-        )
-        if on_boundary:
-            return not ignore_boundary
-        intersect = ((yi > pt[1]) != (yj > pt[1])) and (
-            pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi
-        )
-        if intersect:
-            is_inside = not is_inside
-        j = i
-    return is_inside
-
-
-def in_bbox(pt, bbox):
-    return bbox[0] <= pt[0] <= bbox[2] and bbox[1] <= pt[1] <= bbox[3]
 
 
 # -------------------------------#
@@ -955,9 +867,9 @@ def _is_below(point1, point2, point3):
 
 
 def _is_left(point1, point2, point3):
-    return (point2[0] - point1[0]) * (point3[1] - point1[1]) - (
-        point3[0] - point1[0]
-    ) * (point2[1] - point1[1])
+    return (point2[0] - point1[0]) * (point3[1] - point1[1]) - (point3[0] - point1[0]) * (
+        point2[1] - point1[1]
+    )
 
 
 # -------------------------------#
@@ -965,9 +877,7 @@ def _is_left(point1, point2, point3):
 # ------------ point to line distance -----------#
 
 
-def point_to_line_distance(
-    point: Feature, line: Feature, units="km", method="geodesic"
-):
+def point_to_line_distance(point: Feature, line: Feature, units="km", method="geodesic"):
     """
     Returns the minimum distance between a Point and any segment of the LineString.
 
@@ -987,9 +897,7 @@ def point_to_line_distance(
     >>> point_to_line_distance(point, linestring)
     """
     if method != "geodesic" and method != "planar":
-        raise Exception(
-            "method name is incorrect ot should be either geodesic or planar"
-        )
+        raise Exception("method name is incorrect ot should be either geodesic or planar")
 
     options = {"units": units, "method": method}
 
@@ -1042,14 +950,10 @@ def distance_to_segment(p, a, b, options):
 
     c1 = _dot(w, v)
     if c1 <= 0:
-        return _calc_distance(
-            p, a, {"method": options.get("method", ""), "units": "deg"}
-        )
+        return _calc_distance(p, a, {"method": options.get("method", ""), "units": "deg"})
     c2 = _dot(v, v)
     if c2 <= c1:
-        return _calc_distance(
-            p, b, {"method": options.get("method", ""), "units": "deg"}
-        )
+        return _calc_distance(p, b, {"method": options.get("method", ""), "units": "deg"})
     b2 = c1 / c2
     Pb = [a[0] + (b2 * v[0]), a[1] + (b2 * v[1])]
 
@@ -1160,9 +1064,7 @@ def rhumb_destination(origin, distance, bearing, options: dict = {}) -> Feature:
     if was_negative_distance:
         distance_in_meters = -1 * (abs(distance_in_meters))
     coords = get_coord(origin)
-    destination_point = _calculate_rhumb_destination(
-        coords, distance_in_meters, bearing
-    )
+    destination_point = _calculate_rhumb_destination(coords, distance_in_meters, bearing)
     return Feature(
         geometry=Point(destination_point),
         properties=options.get("properties", ""),
@@ -1309,69 +1211,3 @@ def square(bbox: list):
             horizontal_midpoint + ((north - south) / 2),
             north,
         ]
-
-
-# -------------------------------#
-
-
-def points_within_polygon(
-    points: Union[Feature, FeatureCollection],
-    polygons: Union[Feature, FeatureCollection],
-    chunk_size: int = 1,
-) -> FeatureCollection:
-    """Find Point(s) that fall within (Multi)Polygon(s).
-
-    This function takes two inputs GeoJSON Feature :class:`geojson.Point` or
-    :class:`geojson.FeatureCollection` of Points and GeoJSON Feature
-    :class:`geojson.Polygon` or Feature :class:`geojson.MultiPolygon` or
-    FeatureCollection of :class:`geojson.Polygon` or Feature
-    :class:`geojson.MultiPolygon`. and returns all points with in in those
-    Polygon(s) or (Multi)Polygon(s).
-
-    :param points: A single GeoJSON ``Point`` feature or FeatureCollection of Points.
-    :param polygons: A Single GeoJSON Polygon/MultiPolygon or FeatureCollection of
-        Polygons/MultiPolygons.
-    :param chunk_size: Number of chunks each process to handle. The default value is
-            1, for a large number of features please use `chunk_size` greater than 1
-            to get better results in terms of performance.
-    :return: A :class:`geojson.FeatureCollection` of Points.
-    """
-    if not points:
-        raise Exception("Points cannot be empty")
-
-    if points["type"] == "Point":
-        points = FeatureCollection([Feature(geometry=points)])
-
-    if points["type"] == "Feature":
-        points = FeatureCollection([points])
-
-    manager = Manager()
-    results: ListProxy[dict] = manager.list()
-
-    part_func = partial(
-        check_each_point,
-        polygons=polygons,
-        results=results,
-    )
-
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for _ in executor.map(part_func, points["features"], chunksize=chunk_size):
-            pass
-
-    return FeatureCollection(list(results))
-
-
-def check_each_point(point, polygons, results):
-    def __callback_geom_each(
-        current_geometry, feature_index, feature_properties, feature_bbox, feature_id
-    ):
-        contained = False
-        nonlocal results
-        if point not in results:
-            if boolean_point_in_polygon(point["geometry"], current_geometry):
-                contained = True
-
-            if contained:
-                results.append(point)
-
-    geom_each(polygons, __callback_geom_each)

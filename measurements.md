@@ -281,28 +281,6 @@ feature = Feature(geometry=point)
 point_on_feature(feature)
 ```
 
-* Point In Polygon : Takes a Point or a Point Feature and Polygon or Polygon Feature as input and returns 
-        True if Point is in given Feature.
-
-| Argument  | Type | Description |
-| ------- | ------ | ----------- |
-| `point`  | Feature  | Point or Point Feature |
-| `polygon`  | Polygon | Polygon or Polygon Feature |
-| `ignore_boundary`  | boolean(Optional) | Default value is False, specify whether to exclude boundary of the given polygon or not |
-
-| Return  | Type | Description |
-| ------- | ------ | ----------- |
-| `result`  | boolean  | True if the given Point is in Polygons else False |
-
-```python
-from turfpy.measurement import boolean_point_in_polygon
-from geojson import Point, MultiPolygon, Feature
-point = Feature(geometry=Point([-77, 44]))
-polygon = Feature(geometry=MultiPolygon([([(-81, 41), (-81, 47), (-72, 47), (-72, 41), (-81, 41)],),
-([(3.78, 9.28), (-130.91, 1.52), (35.12, 72.234), (3.78, 9.28)],)]))
-boolean_point_in_polygon(point, polygon)
-```
-
 * Tangent To Polygon : Finds the tangents of a (Multi)Polygon from a Point.
 
 | Argument  | Type | Description |

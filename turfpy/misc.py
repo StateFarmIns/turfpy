@@ -86,9 +86,7 @@ def line_intersect(
         if not precise_matches.empty:
             for index, row in precise_matches.iterrows():
                 # intersect = intersects(mapping(row["geometry"]), segment)
-                intersection = Feature(
-                    geometry=mapping(row["geometry"].intersection(s))
-                )
+                intersection = Feature(geometry=mapping(row["geometry"].intersection(s)))
                 key = ",".join(map(str, get_coords(intersection)))
                 if key not in unique:
                     unique.add(key)
@@ -367,9 +365,7 @@ def line_slice(
     )
     clip_coords.append(get_coord(ends[1]))
 
-    return Feature(
-        geometry=LineString(clip_coords), properties=line["properties"].copy()
-    )
+    return Feature(geometry=LineString(clip_coords), properties=line["properties"].copy())
 
 
 def line_arc(
@@ -440,9 +436,9 @@ def line_arc(
 
     if alfa > arc_end_degree:
         coordinates.append(
-            destination(
-                center, radius, arc_end_degree, {"steps": steps, "units": units}
-            )["geometry"]["coordinates"]
+            destination(center, radius, arc_end_degree, {"steps": steps, "units": units})[
+                "geometry"
+            ]["coordinates"]
         )
 
     return Feature(geometry=LineString(coordinates, properties=properties))
