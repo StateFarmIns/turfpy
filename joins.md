@@ -1,4 +1,4 @@
-## Join Examples :
+## Joins Examples :
 * points_within_polygon : Find Point(s) that fall within (Multi)Polygon(s).
 
 | Argument    | Type                                                     | Description                                    |

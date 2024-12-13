@@ -58,9 +58,6 @@ class TestTurfBooleanDisjoint(unittest.TestCase):
             feature1 = geojson["features"][0]
             feature2 = geojson["features"][1]
             result = boolean_disjoint(feature1, feature2)
-            if result is True:
-                print(json.dumps(feature1))
-                print(json.dumps(feature2))
             self.assertFalse(result, False)
 
 
@@ -83,9 +80,6 @@ class TestTurfBooleanIntersects(unittest.TestCase):
             feature1 = geojson["features"][0]
             feature2 = geojson["features"][1]
             result = boolean_intersects(feature1, feature2)
-            if result is False:
-                print(json.dumps(feature1))
-                print(json.dumps(feature2))
             self.assertTrue(result, True)
 
     def test_false_fixtures(self):
