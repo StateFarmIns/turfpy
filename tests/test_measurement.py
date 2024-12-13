@@ -14,6 +14,7 @@ from geojson import (
 
 from turfpy.measurement import (
     along,
+    area,
     bbox,
     bbox_polygon,
     center,
@@ -28,6 +29,16 @@ from turfpy.measurement import (
     rhumb_distance,
     square,
 )
+
+def test_area():
+    """Test area function."""
+    geometry_1 = {"coordinates": [[[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]], "type": "Polygon"};
+    geometry_2 = {"coordinates": [[[2.38, 57.322], [23.194, -20.28], [-120.43, 19.15], [2.38, 57.322]]], "type": "Polygon"};
+    feature_1 = Feature(geometry=geometry_1)
+    feature_2 = Feature(geometry=geometry_2)
+    feature_collection = FeatureCollection([feature_1, feature_2])
+
+    assert area(feature_collection) == 56837434206665.02
 
 
 def test_bbox_point():

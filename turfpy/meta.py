@@ -1,4 +1,8 @@
+from math import pi, sin
+
 from geojson import Feature, LineString, Point
+
+RADIUS = 6378137
 
 
 def coord_each(geojson_obj, callback, exclude_wrap_coord=False):
@@ -309,26 +313,89 @@ def geom_each(geojson_obj, callback):
         feature_index += 1
 
 
-def geom_reduce(geojson_obj, callback, initial_value=None):
-    previous_value = initial_value
+def rad(num: float):
+    return num * pi / 180
 
-    def _callback(
-        current_geometry, feature_index, feature_properties, feature_bbox, feature_id
+def ring_area(coords: list):
+    total = 0.0
+    coords_length = len(coords)
+
+    if coords_length > 2:
+        for i in range(0, coords_length):
+            if i == coords_length - 2:
+                lower_index = coords_length - 2
+                middle_index = coords_length - 1
+                upper_index = 0
+            elif i == coords_length - 1:
+                lower_index = coords_length - 1
+                middle_index = 0
+                upper_index = 1
+            else:
+                lower_index = i
+                middle_index = i + 1
+                upper_index = i + 2
+
+            p1 = coords[lower_index]
+            p2 = coords[middle_index]
+            p3 = coords[upper_index]
+            total += (rad(p3[0]) - rad(p1[0])) * sin(rad(p2[1]))
+
+        total = total * RADIUS * RADIUS / 2
+    return total
+
+
+def polygon_area(coords: list) -> float:
+    total = 0
+
+    if coords and len(coords) > 0:
+        total += abs(ring_area(coords[0]))
+        for i in range(1, len(coords)):
+            total -= abs(ring_area(coords[i]))
+
+    return total
+
+
+def calculate_area(geom) -> float:
+    total = 0.0
+    if geom["type"] == "Polygon":
+        return polygon_area(geom["coordinates"])
+    elif geom["type"] == "MultiPolygon":
+        for coords in geom["coordinates"]:
+            total += polygon_area(coords)
+        return total
+    elif (
+        geom["type"] == "Point"
+        or geom["type"] == "MultiPoint"
+        or geom["type"] == "LineString"
+        or geom["type"] == "MultiLineString"
     ):
+        return 0
+    return 0
+
+def geom_reduce(geojson, initial_value_param):
+    initial_value = initial_value_param
+    previous_value = initial_value_param
+
+    def callback_geom_each(
+        current_geometry,
+        feature_index,
+        feature_properties,
+        feature_bbox,
+        feature_id,
+    ):
+        nonlocal initial_value
         nonlocal previous_value
-        if feature_index == 0 and initial_value is None:
+
+        def callback_geom_reduce(value, geom):
+            return value + calculate_area(geom)
+
+        if feature_index == 0 and initial_value:
             previous_value = current_geometry
         else:
-            previous_value = callback(
-                previous_value,
-                current_geometry,
-                feature_index,
-                feature_properties,
-                feature_bbox,
-                feature_id,
-            )
+            previous_value = callback_geom_reduce(previous_value, current_geometry)
+        return previous_value
 
-    geom_each(geojson_obj, _callback)
+    geom_each(geojson, callback_geom_each)
     return previous_value
 
 
